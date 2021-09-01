@@ -47,13 +47,24 @@ type secFilerInfo struct {
 
 // GetPublicCompanies returns a list of public companies.
 func GetPublicCompanies() ([]Company, error) {
+	return GetPublicCompaniesWithHeaders(map[string]string{})
+}
+
+// GetPublicCompaniesWithHeaders returns a list of public companies, adding the given HTTP headers to the request.
+func GetPublicCompaniesWithHeaders(headers map[string]string) ([]Company, error) {
+
+	client := &http.Client{Timeout: 10 * time.Second}
 
 	req, err := http.NewRequest("GET", iexSymbolsURL, nil)
 	if err != nil {
 		return []Company{}, err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return []Company{}, err
 	}
@@ -79,12 +90,27 @@ func GetPublicCompanies() ([]Company, error) {
 
 // GetFiler gets a single filer from the SEC website based on symbol.
 func GetFiler(symbol string) (filer *model.Filer, err error) {
+	return GetFilerWithHeaders(symbol, map[string]string{})
+}
+
+// GetFilerWithHeaders gets a single filer from the SEC website based on symbol, adding the given HTTP headers to the request.
+func GetFilerWithHeaders(symbol string, headers map[string]string) (filer *model.Filer, err error) {
 	// get the cik for each symbol.
 	// tedious process...
 	url := fmt.Sprintf(secCompanyURL, symbol)
 
-	httpClient := http.Client{Timeout: 10 * time.Second}
-	resp, err := httpClient.Get(url)
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return
+	}
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return
 	}
